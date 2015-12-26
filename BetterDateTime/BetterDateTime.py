@@ -15,10 +15,10 @@ class BetterDateTime(datetime.datetime):
     def plus_weeks(self, weeks):
         return self.plus_days(weeks*7)
 
-    def plus_month(self, months):
-        return self.minus_month(-months)
+    def plus_months(self, months):
+        return self.minus_months(-months)
 
-    def minus_month(self, months):
+    def minus_months(self, months):
         yeardiff = math.floor(months/12)
         monthdiff = months%12
 
@@ -78,16 +78,14 @@ def test_wrapper():
     before = BetterDateTime(2015, 3, 4)
     dt = BetterDateTime(2015, 3, 5, 15, 42, 11)
     after = BetterDateTime(2015, 4, 4)
-    assert(dt.minus_month(1) == BetterDateTime(2015, 2, 5, 15, 42, 11))
-    assert(dt.minus_month(5) == BetterDateTime(2014, 10, 5, 15, 42, 11))
+    assert(dt.minus_months(1) == BetterDateTime(2015, 2, 5, 15, 42, 11))
+    assert(dt.minus_months(5) == BetterDateTime(2014, 10, 5, 15, 42, 11))
     assert(dt.with_start_of_day() == BetterDateTime(2015, 3, 5, 0, 0, 0))
     assert(dt.with_start_of_month() == BetterDateTime(2015, 3, 1, 0, 0, 0))
     assert(dt.with_end_of_day() == BetterDateTime(2015, 3, 5, 23, 59, 59, 999999))
     assert(dt.with_end_of_month() == BetterDateTime(2015, 3, 31, 23, 59, 59, 999999))
     assert(dt.between(before, after))
     assert(not dt.between(before, before))
-
-    print(dt.get_timezone())
 
 if __name__=='__main__':
     test_wrapper()
