@@ -46,6 +46,12 @@ class BetterDateTime(datetime.datetime):
         local_timezone = BetterDateTime.get_local_timezone()
         return self.astimezone(local_timezone)
 
+    def minus_years(self, years):
+        return self.plus_years(-years)
+
+    def plus_years(self, years):
+        return self.plus_months(12*years)
+
     def minus_weeks(self, weeks):
         return self.minus_days(weeks*7)
 
@@ -129,8 +135,14 @@ def test_month_changes():
     dt = BetterDateTime(2015, 3, 5, 15, 42, 11)
     assert(dt.minus_months(1).equals(BetterDateTime(2015, 2, 5, 15, 42, 11)))
     assert(dt.minus_months(5).equals(BetterDateTime(2014, 10, 5, 15, 42, 11)))
+
+    assert(dt.plus_months(100).minus_months(100).equals(dt))
+    assert(dt.plus_years(1).equals(BetterDateTime(2016, 3, 5, 15, 42, 11)))
+    assert(dt.plus_years(1000).minus_years(1000).equals(dt))
+
     assert(dt.with_start_of_day().equals(BetterDateTime(2015, 3, 5, 0, 0, 0)))
     assert(dt.with_start_of_month().equals(BetterDateTime(2015, 3, 1, 0, 0, 0)))
+
     assert(dt.with_end_of_day().equals(BetterDateTime(2015, 3, 5, 23, 59, 59, 999999)))
     assert(dt.with_end_of_month().equals(BetterDateTime(2015, 3, 31, 23, 59, 59, 999999)))
 
