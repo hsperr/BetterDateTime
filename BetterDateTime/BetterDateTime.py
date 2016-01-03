@@ -8,8 +8,11 @@ import math
 class BetterDateTime(datetime.datetime):
 
     def __new__(cls, *args, **kwargs):
-        if (not 'tzinfo' in kwargs or not kwargs['tzinfo']) and len(args)<8:
+        if not 'timezone' in kwargs and (not 'tzinfo' in kwargs or not kwargs['tzinfo']) and len(args)<8:
             kwargs['tzinfo'] = BetterDateTime.get_local_timezone()
+        elif 'timezone' in kwargs:
+            kwargs['tzinfo'] = BetterDateTime.get_timezone(kwargs['timezone'])
+            del kwargs['timezone']
 
         return datetime.datetime.__new__(cls, *args, **kwargs)
 
@@ -19,10 +22,13 @@ class BetterDateTime(datetime.datetime):
 
     @classmethod
     def from_datetime(cls, dt, timezone=None):
-        if not dt.tzinfo:
-            return cls(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond, dt.tzinfo)
+        if timezone:
+            tzinfo = BetterDateTime.get_timezone(timezone)
+        elif not dt.tzinfo:
+            tzinfo = BetterDateTime.get_local_timezone()
         else:
-            return cls(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond, clf.get_timezone(timezone))
+            tzinfo = dt.tzinfo
+        return cls(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond, tzinfo)
 
     @staticmethod
     def get_timezone(timezone):
@@ -34,7 +40,7 @@ class BetterDateTime(datetime.datetime):
 
     def as_timezone(self, timezone_name):
         tzone = BetterDateTime.get_timezone(timezone_name)
-        return self.replace(tzinfo=tzone)
+        return BetterDateTime.from_datetime(self.astimezone(tzone))
 
     def as_local_timezone(self):
         local_timezone = BetterDateTime.get_local_timezone()
@@ -102,31 +108,65 @@ class BetterDateTime(datetime.datetime):
     def between(self, startdate, enddate):
         return startdate < self < enddate
 
-    def convert(self, timezone):
-        pass
+    def equals(self, datetime):
+        return (self.year == datetime.year and
+                self.month == datetime.month and
+                self.day == datetime.day and
+                self.second == datetime.second and
+                self.microsecond == datetime.microsecond and
+                self.tzinfo == datetime.tzinfo)
+
+    def time_equals(self, datetime):
+        return (self.year == datetime.year and
+                self.month == datetime.month and
+                self.day == datetime.day and
+                self.second == datetime.second and
+                self.microsecond == datetime.microsecond)
 
 
 
-def test_wrapper():
-    before = BetterDateTime(2015, 3, 4)
+def test_month_changes():
     dt = BetterDateTime(2015, 3, 5, 15, 42, 11)
-    print(dt)
+    assert(dt.minus_months(1).equals(BetterDateTime(2015, 2, 5, 15, 42, 11)))
+    assert(dt.minus_months(5).equals(BetterDateTime(2014, 10, 5, 15, 42, 11)))
+    assert(dt.with_start_of_day().equals(BetterDateTime(2015, 3, 5, 0, 0, 0)))
+    assert(dt.with_start_of_month().equals(BetterDateTime(2015, 3, 1, 0, 0, 0)))
+    assert(dt.with_end_of_day().equals(BetterDateTime(2015, 3, 5, 23, 59, 59, 999999)))
+    assert(dt.with_end_of_month().equals(BetterDateTime(2015, 3, 31, 23, 59, 59, 999999)))
+
+def test_between():
+    dt = BetterDateTime(2015, 3, 5, 15, 42, 11)
+    before = BetterDateTime(2015, 3, 4)
     after = BetterDateTime(2015, 4, 4)
-    assert(dt.minus_months(1) == BetterDateTime(2015, 2, 5, 15, 42, 11))
-    assert(dt.minus_months(5) == BetterDateTime(2014, 10, 5, 15, 42, 11))
-    assert(dt.with_start_of_day() == BetterDateTime(2015, 3, 5, 0, 0, 0))
-    assert(dt.with_start_of_month() == BetterDateTime(2015, 3, 1, 0, 0, 0))
-    assert(dt.with_end_of_day() == BetterDateTime(2015, 3, 5, 23, 59, 59, 999999))
-    assert(dt.with_end_of_month() == BetterDateTime(2015, 3, 31, 23, 59, 59, 999999))
     assert(dt.between(before, after))
     assert(not dt.between(before, before))
 
-    dt = BetterDateTime(2015, 1, 30)
-    print(dt)
-    print(dt.plus_months(1))
-    print('local', dt.as_local_timezone())
-    print('utc', dt.as_timezone('UTC'))
-    print('utc, as local', dt.as_timezone('UTC').as_local_timezone())
+def test_from_datetime_with_timezone():
+    real_dt = datetime.datetime(2016, 1, 3, 22, 21, 10)
+    better_dt = BetterDateTime.from_datetime(real_dt)
+    better_dt_utc = BetterDateTime.from_datetime(real_dt, timezone='UTC')
 
-if __name__=='__main__':
-    test_wrapper()
+    assert better_dt.time_equals(real_dt)
+    assert better_dt_utc.time_equals(real_dt)
+    assert not better_dt_utc.equals(better_dt)
+    assert not better_dt_utc.equals(real_dt)
+
+def test_plus_months_need_change_days():
+    dt = BetterDateTime(2016, 1, 30, 18, 33)
+    assert dt.plus_months(1).equals(BetterDateTime(2016, 2, 29, 18, 33))
+
+def test_convert_timezones():
+    dt = BetterDateTime(2016, 1, 3, 18, 33, timezone='UTC')
+    assert dt.as_timezone('Europe/Berlin').time_equals(dt.plus_hours(1))
+    print('Timestamp UTC', dt)
+    print('As Local:', dt.as_local_timezone())
+    print('Again as utc', dt.as_timezone('UTC'))
+    print('Berlin', dt.as_timezone('Europe/Berlin'))
+    print('first utc then local', dt.as_timezone('UTC').as_local_timezone())
+
+if __name__ == "__main__":
+    test_month_changes()
+    test_between()
+    test_from_datetime_with_timezone()
+    test_plus_months_need_change_days()
+    test_convert_timezones()
