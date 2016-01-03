@@ -38,9 +38,12 @@ class BetterDateTime(datetime.datetime):
     def get_local_timezone():
         return tz.tzlocal()
 
-    def as_timezone(self, timezone_name):
-        tzone = BetterDateTime.get_timezone(timezone_name)
-        return BetterDateTime.from_datetime(self.astimezone(tzone))
+    def astimezone(self, timezone):
+        if isinstance(timezone, str):
+            tzone = BetterDateTime.get_timezone(timezone)
+        else:
+            tzone = timezone
+        return BetterDateTime.from_datetime(super().astimezone(tzone))
 
     def as_local_timezone(self):
         local_timezone = BetterDateTime.get_local_timezone()
@@ -169,12 +172,12 @@ def test_plus_months_need_change_days():
 
 def test_convert_timezones():
     dt = BetterDateTime(2016, 1, 3, 18, 33, timezone='UTC')
-    assert dt.as_timezone('Europe/Berlin').time_equals(dt.plus_hours(1))
+    assert dt.astimezone('Europe/Berlin').time_equals(dt.plus_hours(1))
     print('Timestamp UTC', dt)
     print('As Local:', dt.as_local_timezone())
-    print('Again as utc', dt.as_timezone('UTC'))
-    print('Berlin', dt.as_timezone('Europe/Berlin'))
-    print('first utc then local', dt.as_timezone('UTC').as_local_timezone())
+    print('Again as utc', dt.astimezone('UTC'))
+    print('Berlin', dt.astimezone('Europe/Berlin'))
+    print('first utc then local', dt.astimezone('UTC').as_local_timezone())
 
 if __name__ == "__main__":
     test_month_changes()
