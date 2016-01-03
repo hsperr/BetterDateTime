@@ -31,7 +31,11 @@ class BetterDateTime(datetime.datetime):
             result_month += 12
             yeardiff -= 1
 
-        return BetterDateTime(self.year-yeardiff, result_month, self.day, self.hour, self.minute, self.second, self.microsecond, self.tzinfo)
+        result_year = self.year-yeardiff
+
+        days_per_month = calendar.monthrange(result_year, result_month)
+        result_day = min(days_per_month[1], self.day)
+        return BetterDateTime(result_year, result_month, result_day, self.hour, self.minute, self.second, self.microsecond, self.tzinfo)
 
     def plus_days(self, days):
         return self.minus_days(-days)
