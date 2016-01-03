@@ -3,6 +3,11 @@
 BetterDateTime provides a wrapper around the buildin python datetime module adding useful functions.
 I was heavily inspired by the scala Joda-Time class and wanted to have similar ease in ptyhon working with datetimes and timezones.
 
+## Features
+
+Not sure its a sensible thing to do but BetterDateTime always sets the timezone attribute, if none is specified it will assume the current local timezone. It can be created the same as a regular datetime or by providing a datetime or from milliseconds
+Timezones can easily be converted using the as_timezone command.
+
 Some examples of what you are going to get:
 
 ```
