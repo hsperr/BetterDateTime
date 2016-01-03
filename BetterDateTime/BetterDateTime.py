@@ -132,7 +132,19 @@ class BetterDateTime(datetime.datetime):
                 self.second == datetime.second and
                 self.microsecond == datetime.microsecond)
 
+    @staticmethod
+    def now():
+        return BetterDateTime.from_datetime(datetime.datetime.now())
 
+    @staticmethod
+    def utcnow():
+        return BetterDateTime.from_datetime(datetime.datetime.utcnow(), timezone="UTC")
+
+
+def test_now():
+    assert(BetterDateTime.now().tzinfo)
+    utcnow = BetterDateTime.utcnow()
+    assert(utcnow.equals(utcnow.astimezone("UTC")))
 
 def test_month_changes():
     dt = BetterDateTime(2015, 3, 5, 15, 42, 11)
@@ -185,3 +197,4 @@ if __name__ == "__main__":
     test_from_datetime_with_timezone()
     test_plus_months_need_change_days()
     test_convert_timezones()
+    test_now()
